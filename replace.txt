@@ -1,0 +1,51 @@
+Use to replace symbols with cmd+g
+
+CREATE TABLE events (
+id int NOT NULL AUTO_INCREMENT,
+data_vendor_id int NOT NULL,
+symbol_id int NOT NULL,
+update_date datetime NOT NULL,
+event_date datetime NOT NULL,
+event varchar(32) NOT NULL,
+ticker varchar(32) NOT NULL,
+PRIMARY KEY (id),
+KEY index_data_vendor_id (data_vendor_id),
+KEY index_symbol_id (symbol_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+
+price_date, created_date, last_updated_date, open_price,
+    high_price, low_price, close_price
+
+
+def insert_daily_data_into_db(data_vendor_id, symbol_id, daily_data):
+    """
+    Insert the S&P500 symbols into the MySQL database.
+    """
+    # Connect to the MySQL instance
+    db_host = 'localhost'
+    db_user = 'sec_user'
+    db_pass = os.environ["sql_pwd"]
+    db_name = 'securities_master'
+    con = mdb.connect(host=db_host, user=db_user, passwd=db_pass, db=db_name)
+    # Create the insert strings
+    column_str = """data_vendor_id, symbol_id, price_date, created_date, last_updated_date, open_price,
+    high_price, low_price, close_price, adj_close_price, volume
+    """
+    now = datetime.datetime.utcnow()
+    daily_data = [(
+        data_vendor_id, symbol_id, d[0], # Ticker
+        now,
+        now, # Name
+        d[1], # Sector
+        d[2], d[3], d[4], d[6], d[5].replace(',','')
+        ) for d in daily_data]
+    insert_str = ("%s, " * 11)[:-2]
+    final_str = "INSERT INTO daily_price (%s) VALUES (%s)" % \
+    (column_str, insert_str)
+    # Using the MySQL connection, carry out
+    # an INSERT INTO for every symbol
+    with con:
+        cur = con.cursor()
+        cur.executemany(final_str, daily_data)
+        con.commit()
