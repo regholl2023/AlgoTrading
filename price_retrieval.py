@@ -11,7 +11,6 @@ import requests
 import bs4
 import time
 import random
-import os
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.by import By
@@ -125,13 +124,17 @@ def get_daily_historic_data_yahoo(
                 # open_price will contain an event
                 events.append((date, open_price, ticker))
                 continue
-            high_price = selected[2].text
-            high_price = high_price.replace(',','')
             # Some data might not be available (represented by something like a '-')
             # For each of the numerical values, try convering to a float to see if casting
             # throws and error. If it throws and error, the data probably isn't numerical
             # so we just replace that value in the table with None (NULL in SQL). 
             # Not clean but IDGAF
+            try:
+                test = float(open_price)
+            except:
+                open_price = None
+            high_price = selected[2].text
+            high_price = high_price.replace(',','')
             try:
                 test = float(high_price)
             except:
@@ -228,7 +231,7 @@ if __name__ == "__main__":
     warnings.filterwarnings('ignore')
     # Loop over the tickers and insert the daily historical
     # data into the database
-    tickers = obtain_list_of_db_tickers()[148:]
+    tickers = obtain_list_of_db_tickers()[423:]
     lentickers = len(tickers)
     for i, t in enumerate(tickers):
         print("Adding data for %s: %s out of %s" %
